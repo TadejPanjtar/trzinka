@@ -2,14 +2,8 @@ import java.net.*;
 import java.io.*;
 
 public class HttpServerInfo {
-	public static void main(String[] args) throws Exception {
-		String server = "gambee.com";
-		if (args.length>0) server=args[0];
-		HttpServerInfo si = new HttpServerInfo();
-		System.out.println(si.getInfo(server));
-	}
-
-	private String getInfo(String server) throws UnknownHostException, IOException {
+	
+	public String getInfo(String server) throws UnknownHostException, IOException {
 
 		Socket s = new Socket(InetAddress.getByName(server), 80);
 		PrintWriter pw = new PrintWriter(s.getOutputStream());
