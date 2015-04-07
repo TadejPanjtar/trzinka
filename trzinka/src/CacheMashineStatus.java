@@ -1,31 +1,83 @@
 import java.awt.BorderLayout;
-import java.awt.EventQueue;
-
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.border.EmptyBorder;
-import javax.swing.JTable;
-import javax.swing.JButton;
-
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.EventQueue;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.net.UnknownHostException;
 import java.util.Enumeration;
 import java.util.Vector;
 
+import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-import javax.swing.SwingUtilities;
+import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
 
 
 
 public class CacheMashineStatus extends JFrame {
+	private class BtnRefreshActionListener implements ActionListener {
+		public void actionPerformed(ActionEvent e) {
+			DefaultTableModel m = (DefaultTableModel) table.getModel();
+			while (m.getRowCount()!=0) m.removeRow(m.getRowCount()-1);
+			m.fireTableDataChanged();    
+			table.repaint(); // Repaint all the component (all Cells).
+
+
+			
+			File file = new File("servers.txt"); // where to save
+			HttpServerInfo si = new HttpServerInfo();
+
+			if (file.exists()) {
+
+				try {
+					BufferedReader reader = new BufferedReader(new FileReader(file));
+					String line = null;
+					String response = null;
+					StringBuilder sb = new StringBuilder();
+					while ((line = reader.readLine()) != null) {
+						int pos=line.indexOf(" ");
+						if (pos>0) line = line.substring(0, pos);
+						try {
+							response = si.getInfo(line);
+							m.addRow(new Object[] { line, response, response});
+							sb.append(line + " " + response + "\r\n");
+						} catch (UnknownHostException uhe) {
+							m.addRow(new Object[] { line, "ERROR", "UnknownHostException",});
+						} catch (IOException ioe) {
+							m.addRow(new Object[] { line, ioe.getMessage(), ioe.getMessage(),});
+						}
+						m.fireTableDataChanged();
+						table.repaint(); // Repaint all the component (all Cells).
+
+					}
+					reader.close();
+					
+//					FileWriter fileWritter;
+//					fileWritter = new FileWriter(file.getName());
+//					PrintWriter bufferWritter = new PrintWriter(fileWritter);
+//					bufferWritter.print(sb); 
+//					bufferWritter.close();
+
+				} catch (IOException ioe) {
+					ioe.printStackTrace();
+				}
+			}
+			
+		}
+	}
 	private class BtnAddActionListener implements ActionListener {
 		public void actionPerformed(ActionEvent e) {
 			DefaultTableModel m = (DefaultTableModel) table.getModel();
@@ -96,6 +148,7 @@ public class CacheMashineStatus extends JFrame {
 		contentPane.add(panel, BorderLayout.SOUTH);
 		
 		JButton btnRefresh = new JButton("Refresh");
+		btnRefresh.addActionListener(new BtnRefreshActionListener());
 		panel.add(btnRefresh);
 		
 		JButton btnAdd = new JButton("Add");

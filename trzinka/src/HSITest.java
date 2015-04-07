@@ -4,6 +4,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.UnknownHostException;
 
 public class HSITest {
 
@@ -13,7 +14,6 @@ public class HSITest {
 
 		if (file.exists()) {
 
-			try {
 				BufferedReader reader = new BufferedReader(new FileReader(file));
 				String line = null;
 				String response = null;
@@ -21,9 +21,16 @@ public class HSITest {
 				while ((line = reader.readLine()) != null) {
 					int pos=line.indexOf(" ");
 					if (pos>0) line = line.substring(0, pos);
-					response = si.getInfo(line);
-					System.out.println("server: " + line + " " + response);
-					sb.append(line + " " + response + "\r\n");
+					try {
+						response = si.getInfo(line);
+						System.out.println("server: " + line + " " + response);
+						sb.append(line + " " + response + "\r\n");
+					} catch (UnknownHostException e) {
+						System.err.println("ERROR: " + line + " UNKNOWN HOST");
+					} catch (IOException e) {
+						//					e.printStackTrace();
+						System.err.println("ERROR: " + line + " " + e.getMessage());
+					}		
 				}
 				reader.close();
 				
@@ -33,9 +40,6 @@ public class HSITest {
 				bufferWritter.print(sb); 
 				bufferWritter.close();
 
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
 		} else // not servers from file
 		{
 			String server = "192.168.1.1"; // "gambee.com";
