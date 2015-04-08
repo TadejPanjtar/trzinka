@@ -28,7 +28,10 @@ import javax.swing.table.TableColumn;
 
 
 public class CacheMashineStatus extends JFrame {
+	private static final String DELIMETER = "\r\n";
+		
 	private class BtnRefreshActionListener implements ActionListener {
+
 		public void actionPerformed(ActionEvent e) {
 			DefaultTableModel m = (DefaultTableModel) table.getModel();
 			while (m.getRowCount()!=0) m.removeRow(m.getRowCount()-1);
@@ -38,14 +41,13 @@ public class CacheMashineStatus extends JFrame {
 
 			
 			File file = new File("servers.txt"); // where to save
-			HttpServerInfo si = new HttpServerInfo();
 
 			if (file.exists()) {
 
 				try {
 					BufferedReader reader = new BufferedReader(new FileReader(file));
 					String line = null;
-					StringBuilder sb = new StringBuilder();
+					final StringBuilder sb = new StringBuilder();
 					while ((line = reader.readLine()) != null) {
 						int pos=line.indexOf(" ");
 						if (pos>0) line = line.substring(0, pos);
@@ -55,17 +57,19 @@ public class CacheMashineStatus extends JFrame {
 						      @Override
 						      public void run() {
 									String response = null;
+									DefaultTableModel m = (DefaultTableModel) table.getModel();
+									HttpServerInfo si = new HttpServerInfo();
 
 						    	  try {
 										response = si.getInfo(fline);
 										m.addRow(new Object[] { fline, response, response});
-										sb.append(fline + " " + response + "\r\n");
+										sb.append(fline + " " + response + DELIMETER);
 									} catch (UnknownHostException uhe) {
 										m.addRow(new Object[] { fline, "ERROR", "UnknownHostException",});
-										sb.append(fline + "\r\n");
+										sb.append(fline + DELIMETER);
 									} catch (IOException ioe) {
 										m.addRow(new Object[] { fline, "ERROR", ioe.getMessage(),});
-										sb.append(fline + "\r\n");
+										sb.append(fline + DELIMETER);
 									}
 									m.fireTableDataChanged();
 									table.repaint(); // Repaint all the component (all Cells).
