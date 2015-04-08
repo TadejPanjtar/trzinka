@@ -45,23 +45,34 @@ public class CacheMashineStatus extends JFrame {
 				try {
 					BufferedReader reader = new BufferedReader(new FileReader(file));
 					String line = null;
-					String response = null;
 					StringBuilder sb = new StringBuilder();
 					while ((line = reader.readLine()) != null) {
 						int pos=line.indexOf(" ");
 						if (pos>0) line = line.substring(0, pos);
-						try {
-							response = si.getInfo(line);
-							m.addRow(new Object[] { line, response, response});
-							sb.append(line + " " + response + "\r\n");
-						} catch (UnknownHostException uhe) {
-							m.addRow(new Object[] { line, "ERROR", "UnknownHostException",});
-						} catch (IOException ioe) {
-							m.addRow(new Object[] { line, ioe.getMessage(), ioe.getMessage(),});
-						}
-						m.fireTableDataChanged();
-						table.repaint(); // Repaint all the component (all Cells).
+						
+						final String fline = line;
+						new Thread() {
+						      @Override
+						      public void run() {
+									String response = null;
 
+						    	  try {
+										response = si.getInfo(fline);
+										m.addRow(new Object[] { fline, response, response});
+										sb.append(fline + " " + response + "\r\n");
+									} catch (UnknownHostException uhe) {
+										m.addRow(new Object[] { fline, "ERROR", "UnknownHostException",});
+										sb.append(fline + "\r\n");
+									} catch (IOException ioe) {
+										m.addRow(new Object[] { fline, "ERROR", ioe.getMessage(),});
+										sb.append(fline + "\r\n");
+									}
+									m.fireTableDataChanged();
+									table.repaint(); // Repaint all the component (all Cells).
+
+						      }
+						    }.start();
+						
 					}
 					reader.close();
 					
@@ -137,7 +148,7 @@ public class CacheMashineStatus extends JFrame {
 	public CacheMashineStatus() {
 		super("Cashe machine statuses");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, 450, 300);
+		setBounds(100, 100, 550, 400);
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		contentPane.setLayout(new BorderLayout(0, 0));
@@ -160,13 +171,13 @@ public class CacheMashineStatus extends JFrame {
 		
 		 Vector<Vector<Object>> data = new Vector<Vector<Object>>();
 	        Vector<String> columNames = new Vector<String>();
-	        columNames.add("Col 0");
-	        columNames.add("Col 1");
-	        columNames.add("Col 2");
+	        columNames.add("Server");
+	        columNames.add("Status");
+	        columNames.add("Additional info");
 	        for (int i = 0; i < 20; i++) {
 	            Vector<Object> v = new Vector<Object>();
-	            v.add(i % 3 == 0 ? "Hello" : "World");
-	            v.add("Some data in row " + (i + 1));
+	            v.add(""); //v.add(i % 3 == 0 ? "Hello" : "World");
+	            v.add("<-- enter server " + (i + 1));
 	            v.add("Some other data in row " + (i + 1));
 	            data.add(v);
 	        }
