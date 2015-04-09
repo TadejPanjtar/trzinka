@@ -29,18 +29,15 @@ import javax.swing.table.TableColumn;
 
 public class CacheMashineStatus extends JFrame {
 	private static final String DELIMETER = "\r\n";
+	File file = new File("servers.txt"); // where to save
 		
 	private class BtnRefreshActionListener implements ActionListener {
 
 		public void actionPerformed(ActionEvent e) {
 			DefaultTableModel m = (DefaultTableModel) table.getModel();
-			while (m.getRowCount()!=0) m.removeRow(m.getRowCount()-1);
+//			while (m.getRowCount()!=0) m.removeRow(m.getRowCount()-1);
 			m.fireTableDataChanged();    
 			table.repaint(); // Repaint all the component (all Cells).
-
-
-			
-			File file = new File("servers.txt"); // where to save
 
 			if (file.exists()) {
 
@@ -48,31 +45,47 @@ public class CacheMashineStatus extends JFrame {
 					BufferedReader reader = new BufferedReader(new FileReader(file));
 					String line = null;
 					final StringBuilder sb = new StringBuilder();
-					while ((line = reader.readLine()) != null) {
-						int pos=line.indexOf(" ");
-						if (pos>0) line = line.substring(0, pos);
+//					while ((line = reader.readLine()) != null) {
+					for (int i = 0; i < m.getRowCount(); i++) {
+						line = m.getValueAt(i, 0).toString();
+//						int pos=line.indexOf(" ");
+//						if (pos>0) line = line.substring(0, pos);
 						
 						final String fline = line;
 						new Thread() {
 						      @Override
 						      public void run() {
 									String response = null;
+									String c1 = null;
+									String c2 = null;
 									DefaultTableModel m = (DefaultTableModel) table.getModel();
 									HttpServerInfo si = new HttpServerInfo();
 
 						    	  try {
 										response = si.getInfo(fline);
-										m.addRow(new Object[] { fline, response, response});
-										sb.append(fline + " " + response + DELIMETER);
+//										m.addRow(new Object[] { fline, response, response});
+//										sb.append(fline + " " + response + DELIMETER);
+						    		    c1 = response;
 									} catch (UnknownHostException uhe) {
-										m.addRow(new Object[] { fline, "ERROR", "UnknownHostException",});
-										sb.append(fline + DELIMETER);
+//										m.addRow(new Object[] { fline, "ERROR", "UnknownHostException",});
+//										sb.append(fline + DELIMETER);
+										c1 = "ERROR"; 
+										c2  = "UnknownHostException";
 									} catch (IOException ioe) {
-										m.addRow(new Object[] { fline, "ERROR", ioe.getMessage(),});
-										sb.append(fline + DELIMETER);
+										c1 = "ERROR"; 
+										c2  = ioe.getMessage();
 									}
-									m.fireTableDataChanged();
-									table.repaint(); // Repaint all the component (all Cells).
+//						    	  m.addRow(new Object[] { fline, c1, c2 });
+						    	  for (int i = 0; i < m.getRowCount(); i++) {
+						    		  if (m.getValueAt(i, 0).toString().equals(fline)) {
+						    			  m.setValueAt(c1, i, 1);
+						    			  m.setValueAt(c2, i, 2);
+						    		  }
+						    	  }
+						    	  sb.append(fline + DELIMETER);
+
+						    	  m.fireTableDataChanged();
+						    	  table.repaint(); // Repaint all the component (all Cells).
 
 						      }
 						    }.start();
@@ -96,7 +109,8 @@ public class CacheMashineStatus extends JFrame {
 	private class BtnAddActionListener implements ActionListener {
 		public void actionPerformed(ActionEvent e) {
 			DefaultTableModel m = (DefaultTableModel) table.getModel();
-			m.addRow(new Object[] { "data", "data", "data", "data"});
+			m.addRow(new Object[] { "", "<-- enter server", ""});
+			table.revalidate();
 		}
 	}
 
@@ -123,9 +137,6 @@ public class CacheMashineStatus extends JFrame {
 
 	    }
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 5431470566872605326L;
 	private JPanel contentPane;
 	private JTable table;
@@ -178,13 +189,29 @@ public class CacheMashineStatus extends JFrame {
 	        columNames.add("Server");
 	        columNames.add("Status");
 	        columNames.add("Additional info");
-	        for (int i = 0; i < 20; i++) {
-	            Vector<Object> v = new Vector<Object>();
-	            v.add(""); //v.add(i % 3 == 0 ? "Hello" : "World");
-	            v.add("<-- enter server " + (i + 1));
-	            v.add("Some other data in row " + (i + 1));
-	            data.add(v);
-	        }
+	        
+			if (file.exists()) {
+
+				try {
+					BufferedReader reader = new BufferedReader(new FileReader(file));
+					String line = null;
+					int i=0;
+					while ((line = reader.readLine()) != null) {
+						int pos=line.indexOf(" ");
+						if (pos>0) line = line.substring(0, pos);
+						Vector<Object> v = new Vector<Object>();
+						v.add(line);
+						v.add("<-- enter server " + (i + 1));
+						v.add("Some other data in row " + (i + 1));
+						data.add(v);
+						i++;
+					}
+					reader.close();
+				} catch (IOException ioe) {
+					ioe.printStackTrace();
+				}
+			}
+				
 	        table = new JTable(new DefaultTableModel(data, columNames));
 	        Enumeration<TableColumn> en = table.getColumnModel().getColumns();
 //	        while (en.hasMoreElements()) {
